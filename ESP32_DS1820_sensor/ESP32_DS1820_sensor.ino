@@ -120,7 +120,7 @@ void get_temps()
 
 void loop() {
   String s;
-  int i=0,state=0;
+  int i=0,state=0, ap_timer=0;
   long last_millis=0;
   char payload[10];
 
@@ -178,8 +178,17 @@ void loop() {
   //Blinking LED will indicate that wifi isn't connected - and board in AP mode.
   if(millis()-last_millis>1000)
   {
+    Serial.println("Unable to connect WIFI. AP mode. Will go to sleep after 180 seconds...");
+    Serial.println("Time in AP mode: ");
+    Serial.println(ap_timer);
     state=1-state;
     digitalWrite(ONBOARD_LED, state);
     last_millis=millis();
+    ap_timer++;
+    if(ap_timer>180)
+    {
+      Serial.println("AP timer expired. Going to sleep now.");
+       esp_deep_sleep_start();
+    }
   }
 }
