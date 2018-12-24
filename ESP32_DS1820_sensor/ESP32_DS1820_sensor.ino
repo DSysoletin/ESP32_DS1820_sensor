@@ -25,7 +25,7 @@ float temps[2];
 
 //Deep sleep part - from https://github.com/SensorsIot/ESP32-Deep-Sleep/blob/master/TimerWakeUp/TimerWakeUp.ino
 #define uS_TO_S_FACTOR 1000000  /* Conversion factor for micro seconds to seconds */
-#define TIME_TO_SLEEP 60 /* Time ESP32 will go to sleep (in seconds) */
+#define TIME_TO_SLEEP 180 /* Time ESP32 will go to sleep (in seconds) */
 
 
 
@@ -58,11 +58,11 @@ void reconnect() {
   // Loop until we're reconnected
   //while (!client.connected()) {
 
-  if(millis()-reconnect_lastrun < 5000)
-  {
-    return ;
-  }
-  digitalWrite(LED_BUILTIN, LOW);
+  //if(millis()-reconnect_lastrun < 5000)
+  //{
+  //  return ;
+  //}
+  //digitalWrite(LED_BUILTIN, LOW);
   
     Serial.print("Attempting MQTT connection...");
     // Create a random client ID
@@ -83,13 +83,14 @@ void reconnect() {
 
   //}
   //digitalWrite(LED_BUILTIN, HIGH);
-  reconnect_lastrun = millis();
+  //reconnect_lastrun = millis();
 }
 
 
 void get_temps()
 {
   int i;
+  int t1_ok=0, t2_ok=0;
   int num_sensors;
   float temp;
   num_sensors=ds1820_sensors.getDS18Count();
@@ -99,15 +100,31 @@ void get_temps()
   {
     ds1820_sensors.requestTemperatures();
     delay(1000);
-    temp=ds1820_sensors.getTempCByIndex(0);
-    Serial.print("Temp(0): ");
-    Serial.println(temp);
-    temps[0]=temp;
-    temp=ds1820_sensors.getTempCByIndex(1);
-    Serial.print("Temp(1): ");
-    Serial.println(temp);
-    temps[1]=temp;
-    if((temps[0]!=85.0)&&(temps[0]!=-127.0)&&(temps[1]!=85.0)&&(temps[1]!=-127.0))
+    if(t1_ok==0)
+    {
+      temp=ds1820_sensors.getTempCByIndex(0);
+      if((temp!=85.0)&&(temp!=-127.0))
+      {
+        Serial.print("Temp(0): ");
+        Serial.println(temp);
+        temps[0]=temp;
+        t1_ok=1;
+      }
+    }
+
+    if(t2_ok==0)
+    {
+      temp=ds1820_sensors.getTempCByIndex(1);
+      if((temp!=85.0)&&(temp!=-127.0))
+      {
+        Serial.print("Temp(1): ");
+        Serial.println(temp);
+        temps[1]=temp;
+        t2_ok=1;
+      }
+    }
+    //if((temps[0]!=85.0)&&(temps[0]!=-127.0)&&(temps[1]!=85.0)&&(temps[1]!=-127.0))
+    if((t1_ok==1)&&(t2_ok==1))
     {
       break;
     }
@@ -121,7 +138,7 @@ void get_temps()
 void loop() {
   String s;
   int i=0,state=0;
-  long last_millis=0;
+  static long last_millis=0;
   char payload[10];
   static int ap_timer=0;
 
@@ -136,9 +153,10 @@ void loop() {
   if(Esp.WIFI_connected)
   {
     //We're here - this means that wifi is connected
-  
+    i=0;
     //Try to connect to mqtt server
-    if ((!client.connected())&&(i<5)) {
+    while((!client.connected())&&(i<5)) {
+      customWatchdog = millis();
       reconnect();
       i++;
     }
@@ -146,6 +164,7 @@ void loop() {
     //If several attempts failed - go to sleep, maybe something wrong with internet connectivity?
     if (!client.connected())
     {
+      Serial.println("Failed to connect to MQTT server. Maybe something wrong with internet connectivity. Going to sleep...");
       esp_deep_sleep_start();
     }
     
