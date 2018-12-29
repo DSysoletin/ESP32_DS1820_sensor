@@ -137,10 +137,10 @@ void get_temps()
 
 void loop() {
   String s;
-  int i=0,state=0;
+  int i=0;
   static long last_millis=0;
   char payload[10];
-  static int ap_timer=0;
+  static int ap_timer=0,state=0;
 
 //  payload="\0\0\0\0\0\0\0\0\0";
   //  WebServer requests handling
@@ -178,12 +178,12 @@ void loop() {
     //Public data to MQTT server
     s = "ESP32_"+config.mqtt_prefix+"0";
     Serial.println(s);
-    client.publish(s.c_str(), payload);
+    client.publish(s.c_str(), payload,true);
     dtostrf(temps[1], 5, 3, payload); 
     //Public data to MQTT server
     s = "ESP32_"+config.mqtt_prefix+"1";
     Serial.println(s);
-    client.publish(s.c_str(), payload);
+    client.publish(s.c_str(), payload,true);
 
     delay(1000);
     digitalWrite(ONBOARD_LED, HIGH);
