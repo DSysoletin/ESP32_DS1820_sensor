@@ -147,6 +147,7 @@ void loop() {
   server.handleClient();
   customWatchdog = millis();
   
+  ArduinoOTA.handle();
 
   //Only do all things if wifi connected. 
   //In other case, config AP should be activated, and we should not try to send data and sleep
@@ -165,13 +166,13 @@ void loop() {
     if (!client.connected())
     {
       Serial.println("Failed to connect to MQTT server. Maybe something wrong with internet connectivity. Going to sleep...");
-      esp_deep_sleep_start();
+      //esp_deep_sleep_start();
     }
     
     client.loop();
     //read temperatures
     customWatchdog = millis();
-    get_temps();
+    //get_temps();
     customWatchdog = millis();
     //payload=temps[0];
     dtostrf(temps[0], 5, 3, payload); 
@@ -188,7 +189,7 @@ void loop() {
     delay(1000);
     digitalWrite(ONBOARD_LED, HIGH);
     Serial.println("Going to sleep...");
-    esp_deep_sleep_start();
+    //esp_deep_sleep_start();
   
   } 
 
@@ -206,7 +207,7 @@ void loop() {
     {
       Serial.println("AP timer expired. Going to sleep now.");
       ap_timer=0;
-      esp_deep_sleep_start();
+      //esp_deep_sleep_start();
     }
   }
 }
